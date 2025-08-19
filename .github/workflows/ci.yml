@@ -15,6 +15,16 @@ jobs:
       - run: ./som.sh -cp core-lib/Smalltalk core-lib/TestSuite/TestHarness.som
       - run: ./som.sh -cp core-lib/Smalltalk:core-lib/TestSuite:core-lib/SomSom/src/compiler:core-lib/SomSom/src/vm:core-lib/SomSom/src/vmobjects:core-lib/SomSom/src/interpreter:core-lib/SomSom/src/primitives core-lib/SomSom/tests/SomSomTests.som
 
+      - name: Integration Tests
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          export VM=./som.sh
+          export CLASSPATH=Smalltalk
+          export TEST_EXPECTATIONS=./integration-tests.yml
+          export AWFY=Examples/AreWeFastYet/Core
+          pytest core-lib/IntegrationTests
+
       - run: npm ci
       - run: npm test
       - run: npm run lint

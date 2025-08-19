@@ -23,11 +23,12 @@
 
 import { intOrBigInt, isInIntRange } from '../../lib/platform.js';
 
-import { SBigInteger } from '../vmobjects/numbers.js';
+import { SBigInteger, SInteger } from '../vmobjects/numbers.js';
 import { Primitives } from './Primitives.js';
 
 import { universe } from '../vm/Universe.js';
 import { SString } from '../vmobjects/SString.js';
+import { notYetImplemented } from '../../lib/assert.js';
 
 function toNumber(val) {
   if (val instanceof SBigInteger) {
@@ -41,7 +42,16 @@ function _asString(_frame, args) {
 }
 
 function _sqrt(_frame, args) {
-  const res = Math.sqrt(args[0].getEmbeddedInteger());
+  const rcvr = args[0];
+  if (rcvr instanceof SBigInteger) {
+    const res = Math.sqrt(rcvr.getEmbeddedBigInteger());
+    if (res === BigInt(Math.floor(Number(res)))) {
+      return universe.newBigInteger(res);
+    }
+    return universe.newDouble(Number(res));
+  }
+
+  const res = Math.sqrt(rcvr.getEmbeddedInteger());
   if (res === Math.floor(res)) {
     return universe.newInteger(Math.floor(res));
   }
@@ -117,10 +127,28 @@ function _leftShift(_frame, args) {
 }
 
 function _bitXor(_frame, args) {
-  const right = toNumber(args[1]);
-  const left = toNumber(args[0]);
+  const right = args[1];
+  const left = args[0];
 
-  return universe.newInteger(left ^ right);
+  if (left instanceof SInteger && right instanceof SInteger) {
+    return universe.newInteger(left.getEmbeddedInteger() ^ right.getEmbeddedInteger());
+  }
+
+  if (left instanceof SInteger && right instanceof SBigInteger) {
+    return intOrBigInt(BigInt(left.getEmbeddedInteger()) ^ right.getEmbeddedBigInteger(), universe);
+  }
+
+  if (left instanceof SBigInteger && right instanceof SBigInteger) {
+    return universe.newBigInteger(left.getEmbeddedBigInteger()
+        ^ right.getEmbeddedBigInteger());
+  }
+
+  if (left instanceof SBigInteger && right instanceof SInteger) {
+    return intOrBigInt(left.getEmbeddedBigInteger()
+        ^ BigInt(right.getEmbeddedInteger()), universe);
+  }
+
+  return notYetImplemented();
 }
 
 function _rem(_frame, args) {

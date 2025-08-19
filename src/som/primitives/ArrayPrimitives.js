@@ -34,7 +34,7 @@ function _atPut(_frame, args) {
   const index = args[1];
 
   args[0].setIndexableField(index.getEmbeddedInteger() - 1, value);
-  return value;
+  return args[0];
 }
 
 function _length(_frame, args) {

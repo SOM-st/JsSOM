@@ -54,7 +54,7 @@ function _globalPut(_frame, args) {
   const value = args[2];
   const symbol = args[1];
   universe.setGlobal(symbol, value);
-  return value;
+  return args[0];
 }
 
 function _printString(_frame, args) {

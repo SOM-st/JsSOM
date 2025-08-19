@@ -500,8 +500,8 @@ class Universe {
     return new SInteger(intVal);
   }
 
-  newBigInteger(BigIntVal) {
-    return new SBigInteger(BigIntVal);
+  newBigInteger(bigIntVal) {
+    return new SBigInteger(bigIntVal);
   }
 
   newBlock(blockMethod, contextFrame) {

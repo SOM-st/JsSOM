@@ -136,6 +136,12 @@ export class SInteger extends SAbstractObject {
     if (right instanceof SInteger) {
       return universe.newInteger(this.intVal & right.getEmbeddedInteger());
     }
+
+    if (right instanceof SBigInteger) {
+      const r = Number(BigInt.asUintN(53, right.getEmbeddedBigInteger()));
+      return universe.newInteger(this.intVal & r);
+    }
+
     notYetImplemented(); // not supported by the library and, not sure what semantics should be
     return null;
   }
@@ -204,7 +210,11 @@ export class SDouble extends SAbstractObject {
   }
 
   primAsString() {
-    return universe.newString(this.doubleVal.toString());
+    let val = this.doubleVal.toString();
+    if (!val.includes('.') && !Number.isNaN(this.doubleVal)) {
+      val += '.0'; // ensure that we have a decimal point
+    }
+    return universe.newString(val);
   }
 
   primSubtract(right) {
@@ -317,7 +327,7 @@ export class SBigInteger extends SAbstractObject {
     } else if (right instanceof SDouble) {
       return universe.newDouble(Number(this.bigIntVal)).primIntDiv(right);
     } else {
-      result = this.bigIntVal / right.getEmbeddedInteger();
+      result = this.bigIntVal / BigInt(right.getEmbeddedInteger());
     }
     return universe.newBigInteger(result);
   }
@@ -334,8 +344,17 @@ export class SBigInteger extends SAbstractObject {
     return universe.newBigInteger(result);
   }
 
-  primAnd(_right) {
+  primAnd(right) {
+    if (right instanceof SBigInteger) {
+      return intOrBigInt(this.bigIntVal & right.getEmbeddedBigInteger(), universe);
+    }
+
+    if (right instanceof SInteger) {
+      return intOrBigInt(this.bigIntVal & BigInt(right.getEmbeddedInteger()), universe);
+    }
+
     notYetImplemented(); // not supported by the library and, not sure what semantics should be
+    return null;
   }
 
   primEquals(right) {

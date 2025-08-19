@@ -21,8 +21,6 @@
 */
 // @ts-check
 
-import { RuntimeException } from '../../lib/exceptions.js';
-
 import { assert } from '../../lib/assert.js';
 
 import { Node } from './Node.js';
@@ -78,16 +76,16 @@ export class UninitializedSuperDispatchNode extends Node {
 class CachedSuperDispatchNode extends Node {
   constructor(selector, lookupClass) {
     super(null);
+    this.selector = selector;
     assert(lookupClass instanceof SClass);
-    const method = lookupClass.lookupInvokable(selector);
-
-    if (method == null) {
-      throw new RuntimeException('Currently #dnu with super sent is not yet implemented. ');
-    }
-    this.method = method;
+    this.method = lookupClass.lookupInvokable(selector);
   }
 
   executeDispatch(frame, args) {
+    if (this.method === null) {
+      const rcvr = args[0];
+      return rcvr.sendDoesNotUnderstand(this.selector, frame, args);
+    }
     return this.method.invoke(frame, args);
   }
 }

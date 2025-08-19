@@ -60,6 +60,9 @@ function _perform(frame, args) {
   const selector = args[1];
   const rcvr = args[0];
   const invokable = rcvr.getClass().lookupInvokable(selector);
+  if (invokable === null) {
+    return rcvr.sendDoesNotUnderstand(selector, frame, [rcvr]);
+  }
   return invokable.invoke(frame, [rcvr]);
 }
 
@@ -69,17 +72,37 @@ function _performInSuperclass(frame, args) {
   const rcvr = args[0];
 
   const invokable = clazz.lookupInvokable(selector);
+  if (invokable === null) {
+    return rcvr.sendDoesNotUnderstand(selector, frame, [rcvr]);
+  }
   return invokable.invoke(frame, [rcvr]);
 }
 
-function _performWithArguments(_frame, args) {
+function _performWithArguments(frame, args) {
   const directArgs = args[2].getIndexableFields();
   const selector = args[1];
   const rcvr = args[0];
 
   const invokable = rcvr.getClass().lookupInvokable(selector);
   const newArgs = [rcvr].concat(directArgs);
+  if (invokable === null) {
+    return rcvr.sendDoesNotUnderstand(selector, frame, newArgs);
+  }
   return invokable.invoke(rcvr, newArgs);
+}
+
+function _performWithArgumentsInSuperclass(frame, args) {
+  const clazz = args[3];
+  const directArgs = args[2].getIndexableFields();
+  const selector = args[1];
+  const rcvr = args[0];
+
+  const invokable = clazz.lookupInvokable(selector);
+  const newArgs = [rcvr].concat(directArgs);
+  if (invokable === null) {
+    return rcvr.sendDoesNotUnderstand(selector, frame, newArgs);
+  }
+  return invokable.invoke(frame, newArgs);
 }
 
 function _instVarAt(_frame, args) {
@@ -91,7 +114,7 @@ function _instVarAtPut(_frame, args) {
   const val = args[2];
   const idx = args[1];
   args[0].setField(idx.getEmbeddedInteger() - 1, val);
-  return val;
+  return args[0];
 }
 
 function _instVarNamed(_frame, args) {
@@ -118,7 +141,7 @@ class ObjectPrimitives extends Primitives {
     this.installInstancePrimitive('perform:', _perform);
     this.installInstancePrimitive('perform:inSuperclass:', _performInSuperclass);
     this.installInstancePrimitive('perform:withArguments:', _performWithArguments);
-    this.installInstancePrimitive('perform:withArguments:inSuperclass:', null); // TODO: primitive implementation missing, also in RTruffleSOM...
+    this.installInstancePrimitive('perform:withArguments:inSuperclass:', _performWithArgumentsInSuperclass);
     this.installInstancePrimitive('instVarAt:', _instVarAt);
     this.installInstancePrimitive('instVarAt:put:', _instVarAtPut);
     this.installInstancePrimitive('instVarNamed:', _instVarNamed);
